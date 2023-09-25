@@ -1,0 +1,81 @@
+version: '3.0'
+
+services:
+  nginx:
+    build: ./requirements/nginx/
+    container_name: nginx
+    depends_on:
+      - wordpress
+    image: nginx
+    networks:
+      - my-network
+    ports:
+      - '443:443'
+    restart: always
+    volumes:
+      - volume-wordpress:/var/www/wordpress
+
+  wordpress:
+    build: ./requirements/wordpress/
+    container_name: wordpress
+    depends_on:
+      - mariadb
+    environment:
+      - WP_URL=${WP_URL}
+      - WP_TITLE=${WP_TITLE}
+      - WP_ADMIN_USER=${WP_ADMIN_USER}
+      - WP_ADMIN_PWD=${WP_ADMIN_PWD}
+      - WP_ADMIN_EMAIL=${WP_ADMIN_EMAIL}
+      - WP_USER=${WP_USER}
+      - WP_USER_PWD=${WP_USER_PWD}
+      - WP_USER_EMAIL=${WP_USER_EMAIL}
+      - MARIADB_HOST=${MARIADB_HOST}
+      - MARIADB_USER=${MARIADB_USER}
+      - MARIADB_PWD=${MARIADB_PWD}
+      - MARIADB_DB=${MARIADB_DB}
+    image: wordpress
+    networks:
+      - my-network
+    restart: always
+    volumes:
+      - volume-wordpress:/var/www/wordpress
+
+  mariadb:
+    build: ./requirements/mariadb/
+    container_name: mariadb
+    environment:
+      - HOST_NAME=${HOST_NAME}
+      - HOST_IPV4=${HOST_IPV4}
+      - HOST_IPV6=${HOST_IPV6}
+      - MARIADB_DB=${MARIADB_DB}
+      - MARIADB_USER=${MARIADB_USER}
+      - MARIADB_PWD=${MARIADB_PWD}
+      - MARIADB_ADMIN=${MARIADB_ADMIN}
+      - MARIADB_ADMIN_PASS=${MARIADB_ADMIN_PASS}
+    image: mariadb
+    networks:
+      - my-network
+    restart: always
+    volumes:
+      - volume-mariadb:/var/lib/mysql
+
+volumes:
+  volume-mariadb:
+    driver: local
+    driver_opts:
+      device: ${VOLUME_PATH}/mariadb
+      o: bind
+      type: volume
+    name: volume-mariadb
+
+  volume-wordpress:
+    driver: local
+    driver_opts:
+      device: ${VOLUME_PATH}/wordpress
+      o: bind
+      type: volume
+    name: volume-wordpress
+
+networks:
+  my-network:
+    driver: bridge
